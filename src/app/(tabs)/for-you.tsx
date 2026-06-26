@@ -1,14 +1,18 @@
 import { useCallback, useState } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Pressable } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Screen } from '@/components/Screen';
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
+import { Card } from '@/components/Card';
 import { IconButton } from '@/components/IconButton';
 import { VoiceCard } from '@/components/VoiceCard';
 import { VoicePlayer } from '@/components/VoicePlayer';
-import { colors, radius } from '@/theme';
+import { EmptyState } from '@/components/EmptyState';
+import { SectionLabel } from '@/components/SectionLabel';
+import { FeedSkeleton } from '@/components/Skeleton';
+import { colors, spacing, type } from '@/theme';
 import { fetchFeed, incrementPlays } from '@/lib/api';
 import { suggestedUsers, toggleFollow } from '@/lib/social';
 import { compact } from '@/lib/format';
@@ -34,11 +38,11 @@ function SuggestedRow({ user }: { user: SuggestedUser }) {
     }
   };
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
       <Avatar seed={user.username} name={user.displayName} size={44} />
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 15, fontWeight: '700', color: colors.ink }}>{user.displayName}</Text>
-        <Text style={{ fontSize: 13, color: colors.textMuted }}>@{user.username}</Text>
+        <Text style={[type.callout, { fontWeight: '700', color: colors.ink }]}>{user.displayName}</Text>
+        <Text style={[type.footnote, { color: colors.textMuted }]}>@{user.username}</Text>
       </View>
       <Button
         label={following ? 'Following' : 'Follow'}
@@ -54,14 +58,14 @@ function SuggestedRow({ user }: { user: SuggestedUser }) {
 
 function TrendingRow({ rank, post }: { rank: number; post: FeedPost }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-      <Text style={{ width: 18, fontSize: 18, fontWeight: '800', color: colors.textMuted }}>{rank}</Text>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+      <Text style={{ width: 18, ...type.title3, color: colors.textMuted }}>{rank}</Text>
       <Avatar seed={post.username} name={post.displayName} size={44} />
       <View style={{ flex: 1 }}>
-        <Text numberOfLines={2} style={{ fontSize: 14.5, fontWeight: '700', color: colors.ink }}>
+        <Text numberOfLines={2} style={[type.subhead, { fontWeight: '700', color: colors.ink }]}>
           {post.caption || `${post.displayName}'s voice`}
         </Text>
-        <Text style={{ fontSize: 12.5, color: colors.textMuted, marginTop: 1 }}>
+        <Text style={[type.caption, { color: colors.textMuted, marginTop: 1 }]}>
           {post.displayName} · {compact(post.playCount)} plays
         </Text>
       </View>
@@ -105,41 +109,41 @@ export default function ForYouScreen() {
 
   return (
     <Screen>
-      <View style={{ height: 56, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' }}>
-        <Text style={{ flex: 1, fontSize: 26, fontWeight: '800', color: colors.ink }}>For You</Text>
-        <IconButton name="search" />
+      <View style={{ height: 56, paddingHorizontal: spacing.gutter, flexDirection: 'row', alignItems: 'center' }}>
+        <Text style={[type.title1, { flex: 1, color: colors.ink }]}>Discover</Text>
+        <IconButton name="search" accessibilityLabel="Search" />
       </View>
 
       {/* Tabs */}
-      <View style={{ flexDirection: 'row', paddingHorizontal: 16, gap: 22, borderBottomWidth: 1, borderBottomColor: colors.divider }}>
+      <View style={{ flexDirection: 'row', paddingHorizontal: spacing.gutter, gap: spacing.xxl, borderBottomWidth: 1, borderBottomColor: colors.divider }}>
         {TABS.map((t) => {
           const on = t === tab;
           return (
-            <Pressable key={t} onPress={() => setTab(t)} style={{ paddingVertical: 12 }}>
-              <Text style={{ fontSize: 15, fontWeight: on ? '700' : '500', color: on ? colors.ink : colors.textMuted }}>{t}</Text>
-              {on ? <View style={{ height: 2.5, backgroundColor: colors.primary, borderRadius: 2, marginTop: 8 }} /> : null}
+            <Pressable key={t} onPress={() => setTab(t)} style={{ paddingVertical: spacing.md }}>
+              <Text style={[type.callout, { fontWeight: on ? '700' : '500', color: on ? colors.ink : colors.textMuted }]}>{t}</Text>
+              {on ? <View style={{ height: 2.5, backgroundColor: colors.primary, borderRadius: 2, marginTop: spacing.sm }} /> : null}
             </Pressable>
           );
         })}
       </View>
 
       {loading ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={colors.primary} />
-        </View>
+        <FeedSkeleton />
       ) : tab === 'Following' ? (
-        <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
+        <ScrollView contentContainerStyle={{ padding: spacing.gutter, gap: spacing.lg }}>
           {following.length === 0 ? (
-            <Text style={{ fontSize: 14, color: colors.textSec, textAlign: 'center', marginTop: 40, lineHeight: 20 }}>
-              Follow people and their voices will show up here.
-            </Text>
+            <EmptyState
+              icon="users"
+              title="Your following feed is quiet"
+              subtitle="Follow a few people and their voices will show up here."
+            />
           ) : (
             following.map((p) => <VoiceCard key={p.id} post={p} onChanged={load} />)
           )}
         </ScrollView>
       ) : (
-        <ScrollView contentContainerStyle={{ padding: 16, gap: 18 }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+        <ScrollView contentContainerStyle={{ padding: spacing.gutter, gap: spacing.xl }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm }}>
             {TAGS.map((t) => (
               <Chip
                 key={t}
@@ -152,27 +156,28 @@ export default function ForYouScreen() {
           </ScrollView>
 
           {suggested.length > 0 ? (
-            <View style={{ backgroundColor: colors.cardAlt, borderRadius: radius.xl, padding: 16, gap: 16 }}>
-              <Text style={{ fontSize: 12, fontWeight: '800', letterSpacing: 1, color: colors.textMuted }}>VOICES YOU MIGHT LIKE</Text>
+            <Card padding={spacing.lg} style={{ gap: spacing.lg }}>
+              <SectionLabel>Voices you might like</SectionLabel>
               {suggested.map((u) => (
                 <SuggestedRow key={u.id} user={u} />
               ))}
-            </View>
+            </Card>
           ) : null}
 
-          <Text style={{ fontSize: 12, fontWeight: '800', letterSpacing: 1, color: colors.textMuted }}>
-            {tag === 'Trending' ? 'TRENDING NOW' : `TAGGED ${tag.toUpperCase()}`}
-          </Text>
+          <SectionLabel>{tag === 'Trending' ? 'Trending now' : `Tagged ${tag}`}</SectionLabel>
           {shownTrending.length === 0 ? (
-            <Text style={{ fontSize: 14, color: colors.textSec }}>
-              {tag === 'Trending' ? 'No trending voices yet — post one!' : `No voices tagged ${tag} yet.`}
-            </Text>
+            <EmptyState
+              compact
+              icon="trending-up"
+              title={tag === 'Trending' ? 'Nothing trending yet' : `No ${tag} voices yet`}
+              subtitle={tag === 'Trending' ? 'Post a voice and it could land right here.' : `Be the first to post a ${tag} voice.`}
+            />
           ) : (
-            <View style={{ backgroundColor: colors.white, borderRadius: radius.xl, padding: 16, gap: 16 }}>
+            <Card padding={spacing.lg} style={{ gap: spacing.lg }}>
               {shownTrending.slice(0, 8).map((p, i) => (
                 <TrendingRow key={p.id} rank={i + 1} post={p} />
               ))}
-            </View>
+            </Card>
           )}
         </ScrollView>
       )}

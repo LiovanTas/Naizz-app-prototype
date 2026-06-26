@@ -1,10 +1,13 @@
 import { useCallback, useState } from 'react';
-import { View, Text, FlatList, Pressable, TextInput, RefreshControl, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, Pressable, TextInput, RefreshControl } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/Avatar';
-import { colors, radius } from '@/theme';
+import { AppHeader } from '@/components/AppHeader';
+import { EmptyState } from '@/components/EmptyState';
+import { RowSkeleton } from '@/components/Skeleton';
+import { colors, radius, spacing, type, shadow } from '@/theme';
 import { timeAgo, formatDuration } from '@/lib/format';
 import { listConversations } from '@/lib/messages';
 import type { ConversationSummary } from '@/lib/types';
@@ -48,26 +51,28 @@ export default function Messages() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top']}>
-      <View style={{ height: 56, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center' }}>
-        <Pressable onPress={() => router.back()} hitSlop={8} style={{ padding: 6 }}>
-          <Feather name="chevron-left" size={26} color={colors.ink} />
-        </Pressable>
-        <Text style={{ flex: 1, fontSize: 24, fontWeight: '800', color: colors.ink, marginLeft: 4 }}>Messages</Text>
-        <Pressable
-          onPress={() => router.push('/new-message')}
-          style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' }}
-        >
-          <Feather name="plus" size={22} color={colors.white} />
-        </Pressable>
-      </View>
+      <AppHeader
+        title="Messages"
+        onBack={() => router.back()}
+        right={
+          <Pressable
+            onPress={() => router.push('/new-message')}
+            accessibilityRole="button"
+            accessibilityLabel="New message"
+            style={({ pressed }) => ({ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.94 : 1 }], ...shadow.sm })}
+          >
+            <Feather name="edit" size={19} color={colors.white} />
+          </Pressable>
+        }
+      />
 
-      <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.cream, borderRadius: radius.md, paddingHorizontal: 14 }}>
+      <View style={{ paddingHorizontal: spacing.gutter, paddingBottom: spacing.sm }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: 14 }}>
           <Feather name="search" size={18} color={colors.textMuted} />
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder="Search voices"
+            placeholder="Search conversations"
             placeholderTextColor={colors.textMuted}
             style={{ flex: 1, paddingVertical: 12, paddingHorizontal: 10, fontSize: 15, color: colors.ink }}
           />
@@ -75,9 +80,7 @@ export default function Messages() {
       </View>
 
       {loading ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={colors.primary} />
-        </View>
+        <RowSkeleton />
       ) : (
         <FlatList
           data={filtered}
@@ -91,14 +94,14 @@ export default function Messages() {
               <Avatar seed={item.otherUsername} name={item.otherDisplayName} size={52} ring={item.unread > 0 ? colors.primary : undefined} />
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={{ flex: 1, fontSize: 15.5, fontWeight: item.unread > 0 ? '800' : '700', color: colors.ink }}>
+                  <Text style={[type.callout, { flex: 1, fontWeight: item.unread > 0 ? '800' : '700', color: colors.ink }]}>
                     {item.otherDisplayName}
                   </Text>
-                  <Text style={{ fontSize: 12, color: item.unread > 0 ? colors.primary : colors.textMuted }}>{timeAgo(item.lastAt)}</Text>
+                  <Text style={[type.caption, { color: item.unread > 0 ? colors.primary : colors.textMuted }]}>{timeAgo(item.lastAt)}</Text>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 3 }}>
                   {item.lastKind === 'voice' ? <Feather name="mic" size={13} color={item.unread > 0 ? colors.primary : colors.textMuted} style={{ marginRight: 5 }} /> : null}
-                  <Text numberOfLines={1} style={{ flex: 1, fontSize: 13.5, color: item.unread > 0 ? colors.ink : colors.textMuted, fontWeight: item.unread > 0 ? '600' : '400' }}>
+                  <Text numberOfLines={1} style={[type.footnote, { flex: 1, color: item.unread > 0 ? colors.ink : colors.textMuted, fontWeight: item.unread > 0 ? '600' : '400' }]}>
                     {preview(item)}
                   </Text>
                   {item.unread > 0 ? (
@@ -111,12 +114,15 @@ export default function Messages() {
             </Pressable>
           )}
           ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: colors.divider, marginLeft: 80 }} />}
+          contentContainerStyle={filtered.length === 0 ? { flexGrow: 1 } : undefined}
           ListEmptyComponent={
-            <View style={{ alignItems: 'center', paddingTop: 60, paddingHorizontal: 32 }}>
-              <Text style={{ fontSize: 14, color: colors.textSec, textAlign: 'center', lineHeight: 20 }}>
-                No conversations yet. Tap + to start a voice chat.
-              </Text>
-            </View>
+            <EmptyState
+              icon="message-circle"
+              title="No conversations yet"
+              subtitle="Start a voice chat with someone you follow."
+              actionLabel="New message"
+              onAction={() => router.push('/new-message')}
+            />
           }
         />
       )}

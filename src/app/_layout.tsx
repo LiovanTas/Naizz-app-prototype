@@ -11,8 +11,8 @@ import { colors } from '@/theme';
 
 function Splash() {
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.white }}>
-      <Text style={{ fontSize: 34, fontWeight: '700', color: colors.primary, marginBottom: 16 }}>Naizz</Text>
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg }}>
+      <Text style={{ fontSize: 32, fontWeight: '800', color: colors.primary, marginBottom: 18, letterSpacing: -0.5 }}>Naizz</Text>
       <ActivityIndicator color={colors.primary} />
     </View>
   );

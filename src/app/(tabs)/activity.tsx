@@ -1,11 +1,13 @@
 import { useCallback, useState } from 'react';
-import { View, Text, FlatList, RefreshControl, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, RefreshControl } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Screen } from '@/components/Screen';
 import { Avatar } from '@/components/Avatar';
 import { IconButton } from '@/components/IconButton';
-import { colors } from '@/theme';
+import { EmptyState } from '@/components/EmptyState';
+import { RowSkeleton } from '@/components/Skeleton';
+import { colors, spacing, type } from '@/theme';
 import { timeAgo } from '@/lib/format';
 import { listNotifications, markNotificationsRead } from '@/lib/notifications';
 import { loadNotifPrefs, NotifPrefs } from '@/lib/settings';
@@ -26,6 +28,11 @@ const ICON: Record<AppNotification['type'], keyof typeof Feather.glyphMap> = {
   like: 'heart',
   follow: 'user-plus',
   reply: 'mic',
+};
+const TINT: Record<AppNotification['type'], string> = {
+  like: colors.live,
+  follow: colors.primary,
+  reply: colors.green,
 };
 
 export default function Activity() {
@@ -64,41 +71,40 @@ export default function Activity() {
 
   return (
     <Screen>
-      <View style={{ height: 56, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' }}>
-        <Text style={{ flex: 1, fontSize: 26, fontWeight: '800', color: colors.ink }}>Activity</Text>
-        <IconButton name="settings" onPress={() => router.push('/settings')} />
+      <View style={{ height: 56, paddingHorizontal: spacing.gutter, flexDirection: 'row', alignItems: 'center' }}>
+        <Text style={[type.title1, { flex: 1, color: colors.ink }]}>Activity</Text>
+        <IconButton name="settings" accessibilityLabel="Settings" onPress={() => router.push('/settings')} />
       </View>
 
       {loading ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={colors.primary} />
-        </View>
+        <RowSkeleton />
       ) : (
         <FlatList
           data={visible}
           keyExtractor={(n) => n.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+          contentContainerStyle={visible.length === 0 ? { flexGrow: 1 } : undefined}
           renderItem={({ item }) => (
-            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, gap: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.gutter, paddingVertical: spacing.md, gap: spacing.md }}>
               <Avatar seed={item.actorUsername} name={item.actorDisplayName} size={44} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 14.5, lineHeight: 20, color: colors.ink }}>
+                <Text style={[type.subhead, { color: colors.ink }]}>
                   <Text style={{ fontWeight: '700' }}>{item.actorDisplayName}</Text> {ACTION[item.type]}
                 </Text>
-                <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>{timeAgo(item.createdAt)}</Text>
+                <Text style={[type.caption, { color: colors.textMuted, marginTop: 2 }]}>{timeAgo(item.createdAt)}</Text>
               </View>
-              <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: colors.cardAlt, alignItems: 'center', justifyContent: 'center' }}>
-                <Feather name={ICON[item.type]} size={17} color={colors.primary} />
+              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: TINT[item.type] + '18', alignItems: 'center', justifyContent: 'center' }}>
+                <Feather name={ICON[item.type]} size={16} color={TINT[item.type]} />
               </View>
             </View>
           )}
           ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: colors.divider, marginLeft: 72 }} />}
           ListEmptyComponent={
-            <View style={{ alignItems: 'center', paddingTop: 60, paddingHorizontal: 32 }}>
-              <Text style={{ fontSize: 14, color: colors.textSec, textAlign: 'center', lineHeight: 20 }}>
-                No activity yet. Likes, follows and voice replies will show up here.
-              </Text>
-            </View>
+            <EmptyState
+              icon="bell"
+              title="No activity yet"
+              subtitle="Likes, new followers, and voice replies will land here."
+            />
           }
         />
       )}
