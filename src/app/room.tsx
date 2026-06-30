@@ -5,15 +5,21 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/Button';
+import { Badge } from '@/components/Badge';
 import { Waveform } from '@/components/Waveform';
-import { colors } from '@/theme';
+import { colors, radius, spacing, type, shadow } from '@/theme';
 import { supabase } from '@/lib/supabase';
 import { getRoom, listRoomMembers, joinRoom, leaveRoom, setMuted } from '@/lib/rooms';
 import type { RoomMember, RoomSummary } from '@/lib/types';
 
-function CircleBtn({ icon, onPress, bg = colors.deepBtn }: { icon: keyof typeof Feather.glyphMap; onPress?: () => void; bg?: string }) {
+function CircleBtn({ icon, onPress, bg = colors.deepBtn, label }: { icon: keyof typeof Feather.glyphMap; onPress?: () => void; bg?: string; label?: string }) {
   return (
-    <Pressable onPress={onPress} style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label ?? icon}
+      style={({ pressed }) => ({ width: 52, height: 52, borderRadius: 26, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.92 : 1 }], ...shadow.sm })}
+    >
       <Feather name={icon} size={22} color={colors.onDeep} />
     </Pressable>
   );
@@ -68,31 +74,28 @@ export default function Room() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.deep }}>
       {/* Header */}
-      <View style={{ height: 56, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' }}>
+      <View style={{ height: 56, paddingHorizontal: spacing.lg, flexDirection: 'row', alignItems: 'center' }}>
         <View style={{ flex: 1, flexDirection: 'row' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: colors.live, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 6 }}>
-            <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: colors.white }} />
-            <Text style={{ fontSize: 12, fontWeight: '800', color: colors.white, letterSpacing: 1 }}>LIVE</Text>
-          </View>
+          <Badge label="LIVE" tone="live" dot />
         </View>
-        <Pressable onPress={onLeave} hitSlop={8} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.deepBtn, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={onLeave} hitSlop={8} accessibilityLabel="Minimize room" style={({ pressed }) => ({ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.deepBtn, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
           <Feather name="chevron-down" size={22} color={colors.onDeep} />
         </Pressable>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}>
-        <Text style={{ fontSize: 24, fontWeight: '800', color: colors.onDeep, lineHeight: 30, marginTop: 4 }}>
+        <Text style={[type.title1, { color: colors.onDeep, marginTop: spacing.xs }]}>
           {room?.title ?? 'Live room'}
         </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: spacing.sm }}>
           <Feather name="users" size={15} color={colors.onDeepSoft} />
-          <Text style={{ fontSize: 13.5, color: colors.onDeepSoft }}>
+          <Text style={[type.footnote, { color: colors.onDeepSoft }]}>
             Hosted by @{room?.hostUsername ?? '...'} · {members.length} in room
           </Text>
         </View>
 
         {/* Speakers */}
-        <Text style={{ fontSize: 11, fontWeight: '800', letterSpacing: 2, color: colors.onDeepSoft, marginTop: 24 }}>SPEAKERS</Text>
+        <Text style={[type.label, { letterSpacing: 2, color: colors.onDeepSoft, marginTop: spacing.xxl }]}>SPEAKERS</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 14 }}>
           {speakers.map((m) => (
             <View key={m.userId} style={{ width: '25%', alignItems: 'center', marginBottom: 18 }}>
@@ -111,20 +114,20 @@ export default function Room() {
         </View>
 
         {/* Captions */}
-        <View style={{ backgroundColor: colors.deepCard, borderRadius: 18, padding: 18, marginTop: 8 }}>
+        <View style={{ backgroundColor: colors.deepCard, borderRadius: radius.xl, padding: spacing.lg, marginTop: spacing.sm, borderWidth: 1, borderColor: colors.deepLine }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={{ fontSize: 12, fontWeight: '800', letterSpacing: 1.5, color: colors.green }}>LIVE CAPTIONS</Text>
+            <Text style={[type.label, { letterSpacing: 1.2, color: colors.green }]}>LIVE CAPTIONS</Text>
             <View style={{ width: 60, height: 18 }}>
-              <Waveform bars={14} max={16} barWidth={2} gap={2} played={7} color={colors.green} trackColor="rgba(47,191,143,0.3)" />
+              <Waveform bars={14} max={16} barWidth={2} gap={2} played={7} color={colors.green} trackColor="rgba(31,169,125,0.3)" />
             </View>
           </View>
-          <Text style={{ fontSize: 14.5, color: colors.onDeep, lineHeight: 21, marginTop: 12 }}>
+          <Text style={[type.subhead, { color: colors.onDeep, lineHeight: 21, marginTop: spacing.md }]}>
             You&apos;re in the room. Live audio is in presence mode for this build — captions and voice stream turn on when the media service is connected.
           </Text>
         </View>
 
         {/* Listeners */}
-        <Text style={{ fontSize: 11, fontWeight: '800', letterSpacing: 2, color: colors.onDeepSoft, marginTop: 24 }}>
+        <Text style={[type.label, { letterSpacing: 2, color: colors.onDeepSoft, marginTop: spacing.xxl }]}>
           LISTENERS — {listeners.length}
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 14 }}>
@@ -137,9 +140,9 @@ export default function Room() {
 
       {/* Controls */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 }}>
-        <CircleBtn icon={me?.muted ? 'mic-off' : 'mic'} onPress={toggleMute} bg={me?.muted ? colors.deepBtn : colors.primary} />
-        <CircleBtn icon="user-plus" onPress={() => router.push({ pathname: '/connections', params: { mode: 'invite', roomId: id } })} />
-        <CircleBtn icon="share" />
+        <CircleBtn icon={me?.muted ? 'mic-off' : 'mic'} label={me?.muted ? 'Unmute' : 'Mute'} onPress={toggleMute} bg={me?.muted ? colors.deepBtn : colors.primary} />
+        <CircleBtn icon="user-plus" label="Invite" onPress={() => router.push({ pathname: '/connections', params: { mode: 'invite', roomId: id } })} />
+        <CircleBtn icon="share" label="Share room" />
         <View style={{ flex: 1 }} />
         <Button label="Leave" variant="danger" height={52} radiusOverride={26} onPress={onLeave} style={{ paddingHorizontal: 32 }} />
       </View>

@@ -1,6 +1,6 @@
 import { Pressable, Text } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { colors, radius } from '@/theme';
+import { colors, radius, motion } from '@/theme';
 
 type Props = {
   label: string;
@@ -9,24 +9,29 @@ type Props = {
   onPress?: () => void;
 };
 
+// Filter / selection chip. Selected = solid ink, resting = bordered white.
 export function Chip({ label, active, icon, onPress }: Props) {
   const fg = active ? colors.white : colors.text;
   return (
     <Pressable
       onPress={onPress}
-      style={{
+      accessibilityRole="button"
+      accessibilityState={{ selected: !!active }}
+      style={({ pressed }) => ({
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 10,
+        paddingHorizontal: 15,
+        paddingVertical: 9,
         borderRadius: radius.pill,
         backgroundColor: active ? colors.ink : colors.white,
-        borderWidth: active ? 0 : 1.5,
-        borderColor: colors.border,
-      }}
+        borderWidth: 1,
+        borderColor: active ? colors.ink : colors.border,
+        opacity: pressed ? motion.pressOpacity : 1,
+        transform: [{ scale: pressed ? 0.98 : 1 }],
+      })}
     >
-      {icon ? <Feather name={icon} size={16} color={active ? colors.white : colors.primary} style={{ marginRight: 7 }} /> : null}
-      <Text style={{ color: fg, fontSize: 13.5, fontWeight: '600' }}>{label}</Text>
+      {icon ? <Feather name={icon} size={15} color={active ? colors.white : colors.primary} style={{ marginRight: 6 }} /> : null}
+      <Text style={{ color: fg, fontSize: 13.5, fontWeight: '600', letterSpacing: -0.1 }}>{label}</Text>
     </Pressable>
   );
 }

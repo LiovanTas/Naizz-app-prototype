@@ -4,7 +4,7 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { colors } from '@/theme';
+import { colors, type, spacing } from '@/theme';
 import { Button } from '@/components/Button';
 import { Field } from '@/components/Field';
 import { Avatar } from '@/components/Avatar';
@@ -48,25 +48,26 @@ export default function EditProfile() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={{ height: 56, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' }}>
-          <View style={{ flex: 1, alignItems: 'flex-start' }}>
+        <View style={{ height: 56, paddingHorizontal: spacing.lg, flexDirection: 'row', alignItems: 'center' }}>
+          <Pressable onPress={() => router.back()} style={{ flex: 1, alignItems: 'flex-start' }} accessibilityLabel="Cancel">
+            <Text style={[type.callout, { color: colors.textSec }]}>Cancel</Text>
+          </Pressable>
+          <Text style={[type.headline, { color: colors.ink }]}>Edit profile</Text>
+          <View style={{ flex: 1, alignItems: 'flex-end' }}>
             <Button
-              label={busy ? 'Saving…' : 'Save'}
-              height={40}
-              radiusOverride={20}
+              label="Save"
+              height={38}
+              radiusOverride={19}
               fontSize={15}
-              style={{ paddingHorizontal: 24, opacity: busy ? 0.5 : 1 }}
+              loading={busy}
+              style={{ paddingHorizontal: 22 }}
               onPress={onSave}
             />
           </View>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: colors.ink }}>Edit profile</Text>
-          <Pressable onPress={() => router.back()} style={{ flex: 1, alignItems: 'flex-end' }}>
-            <Text style={{ fontSize: 16, color: colors.textSec }}>Cancel</Text>
-          </Pressable>
         </View>
 
-        <ScrollView contentContainerStyle={{ padding: 24, gap: 18 }} keyboardShouldPersistTaps="handled">
-          <View style={{ alignItems: 'center', gap: 10 }}>
+        <ScrollView contentContainerStyle={{ padding: spacing.xxl, gap: spacing.xl }} keyboardShouldPersistTaps="handled">
+          <View style={{ alignItems: 'center', gap: spacing.sm }}>
             <Pressable onPress={pickAvatar}>
               <Avatar
                 seed={profile?.username ?? 'me'}
@@ -93,8 +94,8 @@ export default function EditProfile() {
             multiline
             style={{ minHeight: 90, textAlignVertical: 'top' }}
           />
-          <Text style={{ fontSize: 12, color: colors.textSec, textAlign: 'right' }}>{bio.length}/160</Text>
-          <Text style={{ fontSize: 13, color: colors.textSec }}>@{profile?.username} · username can&apos;t be changed</Text>
+          <Text style={[type.caption, { color: colors.textMuted, textAlign: 'right' }]}>{bio.length}/160</Text>
+          <Text style={[type.footnote, { color: colors.textMuted }]}>@{profile?.username} · username can&apos;t be changed</Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

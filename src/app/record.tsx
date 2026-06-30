@@ -11,7 +11,7 @@ import {
   AudioModule,
   setAudioModeAsync,
 } from 'expo-audio';
-import { colors, radius } from '@/theme';
+import { colors, radius, spacing, type, shadow } from '@/theme';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
 import { Waveform } from '@/components/Waveform';
@@ -103,110 +103,112 @@ export default function Record() {
   };
 
   const canPost = phase === 'recorded' && !!uri;
-  const statusLabel = phase === 'recording' ? 'REC' : phase === 'recorded' ? 'READY' : 'TAP TO RECORD';
+  const statusLabel = phase === 'recording' ? 'Recording' : phase === 'recorded' ? 'Ready to post' : 'Tap to record';
   const playedBars = phase === 'recorded' ? 40 : Math.min(40, liveSeconds * 2);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        {/* Header */}
-        <View style={{ height: 56, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center' }}>
-          <View style={{ flex: 1, alignItems: 'flex-start' }}>
+        {/* Header — Cancel · title · Post (standard convention) */}
+        <View style={{ height: 56, paddingHorizontal: spacing.lg, flexDirection: 'row', alignItems: 'center' }}>
+          <Pressable onPress={cancel} hitSlop={8} style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel="Cancel">
+            <Text style={[type.callout, { color: colors.textSec }]}>Cancel</Text>
+          </Pressable>
+          <Text style={[type.headline, { color: colors.ink }]}>New voice</Text>
+          <View style={{ flex: 1, alignItems: 'flex-end' }}>
             <Button
               label={posting ? 'Posting…' : 'Post'}
-              height={40}
-              radiusOverride={20}
+              height={38}
+              radiusOverride={19}
               fontSize={15}
-              style={{ paddingHorizontal: 24, opacity: canPost && !posting ? 1 : 0.45 }}
-              onPress={canPost ? post : undefined}
+              loading={posting}
+              disabled={!canPost}
+              style={{ paddingHorizontal: 22 }}
+              onPress={post}
             />
           </View>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: colors.ink }}>New voice</Text>
-          <Pressable onPress={cancel} style={{ flex: 1, alignItems: 'flex-end' }}>
-            <Text style={{ fontSize: 16, color: colors.textSec }}>Cancel</Text>
-          </Pressable>
         </View>
 
-        <View style={{ flex: 1, alignItems: 'center', paddingTop: 30 }}>
+        <View style={{ flex: 1, alignItems: 'center', paddingTop: spacing.xxxl }}>
           {/* Status pill */}
           <View
             style={{
               flexDirection: 'row',
               alignItems: 'center',
               gap: 7,
-              backgroundColor: colors.cream,
-              borderRadius: 999,
+              backgroundColor: phase === 'recording' ? colors.liveSoft : colors.cream,
+              borderRadius: radius.pill,
               paddingHorizontal: 14,
               paddingVertical: 7,
             }}
           >
             {phase === 'recording' ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.live }} /> : null}
-            <Text style={{ fontSize: 12, fontWeight: '700', letterSpacing: 1.5, color: phase === 'recording' ? colors.live : colors.textSec }}>
+            <Text style={[type.caption, { fontWeight: '700', letterSpacing: 0.4, color: phase === 'recording' ? colors.live : colors.textSec }]}>
               {statusLabel}
             </Text>
           </View>
 
-          <Text style={{ fontSize: 72, fontWeight: '800', color: colors.ink, marginTop: 28 }}>{formatDuration(shownSeconds)}</Text>
-          <Text style={{ fontSize: 14, color: colors.textMuted }}>of 3:00 max</Text>
+          <Text style={{ fontSize: 72, fontWeight: '800', color: colors.ink, marginTop: spacing.xxl, letterSpacing: -1, fontVariant: ['tabular-nums'] }}>
+            {formatDuration(shownSeconds)}
+          </Text>
+          <Text style={[type.footnote, { color: colors.textMuted }]}>of 3:00 max</Text>
 
-          <View style={{ alignSelf: 'stretch', height: 70, justifyContent: 'center', paddingHorizontal: 28, marginTop: 24 }}>
+          <View style={{ alignSelf: 'stretch', height: 70, justifyContent: 'center', paddingHorizontal: spacing.xxl, marginTop: spacing.xxl }}>
             <Waveform bars={40} max={56} barWidth={3.5} gap={3} played={playedBars} color={colors.primary} trackColor={colors.border} />
           </View>
 
           <View style={{ flex: 1 }} />
 
-          {/* Big record/pause button */}
+          {/* Big record / pause button */}
           <Pressable
             onPress={phase === 'recording' ? stop : phase === 'recorded' ? reRecord : start}
-            style={{
-              width: 150,
-              height: 150,
-              borderRadius: 75,
-              backgroundColor: 'rgba(21,115,166,0.12)',
+            accessibilityRole="button"
+            accessibilityLabel={phase === 'recording' ? 'Stop recording' : phase === 'recorded' ? 'Record again' : 'Start recording'}
+            style={({ pressed }) => ({
+              width: 148,
+              height: 148,
+              borderRadius: 74,
+              backgroundColor: colors.primarySoft,
               alignItems: 'center',
               justifyContent: 'center',
-            }}
+              transform: [{ scale: pressed ? 0.96 : 1 }],
+            })}
           >
             <View
               style={{
-                width: 110,
-                height: 110,
-                borderRadius: 55,
-                backgroundColor: colors.primary,
+                width: 108,
+                height: 108,
+                borderRadius: 54,
+                backgroundColor: phase === 'recording' ? colors.live : colors.primary,
                 alignItems: 'center',
                 justifyContent: 'center',
+                ...shadow.md,
               }}
             >
-              <Feather name={phase === 'recording' ? 'pause' : phase === 'recorded' ? 'refresh-cw' : 'mic'} size={44} color={colors.white} />
+              <Feather name={phase === 'recording' ? 'square' : phase === 'recorded' ? 'refresh-cw' : 'mic'} size={42} color={colors.white} />
             </View>
           </Pressable>
-          <Text style={{ fontSize: 14, color: colors.textMuted, marginTop: 18 }}>
-            {phase === 'recording' ? 'Tap to pause' : phase === 'recorded' ? 'Tap to record again' : 'Tap the mic to start'}
+          <Text style={[type.footnote, { color: colors.textMuted, marginTop: spacing.lg }]}>
+            {phase === 'recording' ? 'Tap to stop' : phase === 'recorded' ? 'Tap to record again' : 'Tap the mic to start'}
           </Text>
 
           <View style={{ flex: 1 }} />
 
           {/* Composer */}
-          <View style={{ alignSelf: 'stretch', paddingHorizontal: 18, paddingBottom: 8, gap: 12 }}>
+          <View style={{ alignSelf: 'stretch', paddingHorizontal: spacing.lg, paddingBottom: spacing.sm, gap: spacing.md }}>
             {imageUri ? (
               <View>
-                <Image source={{ uri: imageUri }} style={{ width: '100%', height: 140, borderRadius: radius.lg }} />
+                <Image source={{ uri: imageUri }} style={{ width: '100%', height: 140, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }} />
                 <Pressable
                   onPress={() => setImageUri(null)}
+                  accessibilityLabel="Remove photo"
                   style={{ position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 14, padding: 5 }}
                 >
                   <Feather name="x" size={16} color={colors.white} />
                 </Pressable>
               </View>
             ) : null}
-            <View
-              style={{
-                backgroundColor: colors.cream,
-                borderRadius: radius.lg,
-                paddingHorizontal: 16,
-                paddingVertical: 4,
-              }}
-            >
+            <View style={{ backgroundColor: colors.white, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 16 }}>
               <TextInput
                 value={caption}
                 onChangeText={(t) => t.length <= 120 && setCaption(t)}
@@ -215,8 +217,8 @@ export default function Record() {
                 style={{ fontSize: 15, color: colors.ink, paddingVertical: 14 }}
               />
             </View>
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <Chip label="Topic" icon="plus" />
+            <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+              <Chip label="Topic" icon="hash" />
               <Chip label={imageUri ? 'Photo added' : 'Photo'} icon="image" active={!!imageUri} onPress={pickImage} />
               <Chip label="Everyone" icon="chevron-down" />
             </View>

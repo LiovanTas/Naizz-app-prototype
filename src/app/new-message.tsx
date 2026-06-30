@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
-import { View, Text, FlatList, Pressable, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, FlatList, Pressable, TextInput, Alert } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/Avatar';
-import { colors, radius } from '@/theme';
+import { EmptyState } from '@/components/EmptyState';
+import { RowSkeleton } from '@/components/Skeleton';
+import { colors, radius, spacing, type } from '@/theme';
 import { supabase } from '@/lib/supabase';
 import { getOrCreateDM } from '@/lib/messages';
 
@@ -49,16 +51,16 @@ export default function NewMessage() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top']}>
-      <View style={{ height: 56, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' }}>
-        <Pressable onPress={() => router.back()} style={{ flex: 1 }}>
-          <Text style={{ fontSize: 16, color: colors.textSec }}>Cancel</Text>
+      <View style={{ height: 56, paddingHorizontal: spacing.gutter, flexDirection: 'row', alignItems: 'center' }}>
+        <Pressable onPress={() => router.back()} style={{ flex: 1 }} accessibilityLabel="Cancel">
+          <Text style={[type.callout, { color: colors.textSec }]}>Cancel</Text>
         </Pressable>
-        <Text style={{ fontSize: 16, fontWeight: '700', color: colors.ink }}>New message</Text>
+        <Text style={[type.headline, { color: colors.ink }]}>New message</Text>
         <View style={{ flex: 1 }} />
       </View>
 
-      <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.cream, borderRadius: radius.md, paddingHorizontal: 14 }}>
+      <View style={{ paddingHorizontal: spacing.gutter, paddingBottom: spacing.sm }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: 14 }}>
           <Feather name="search" size={18} color={colors.textMuted} />
           <TextInput
             value={query}
@@ -72,25 +74,21 @@ export default function NewMessage() {
       </View>
 
       {loading ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={colors.primary} />
-        </View>
+        <RowSkeleton />
       ) : (
         <FlatList
           data={filtered}
           keyExtractor={(u) => u.id}
           renderItem={({ item }) => (
-            <Pressable onPress={() => open(item)} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 12 }}>
+            <Pressable onPress={() => open(item)} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.gutter, paddingVertical: spacing.md, gap: spacing.md, backgroundColor: pressed ? colors.cardAlt : 'transparent' })}>
               <Avatar seed={item.username} name={item.display_name} size={48} />
               <View>
-                <Text style={{ fontSize: 15.5, fontWeight: '700', color: colors.ink }}>{item.display_name}</Text>
-                <Text style={{ fontSize: 13, color: colors.textMuted }}>@{item.username}</Text>
+                <Text style={[type.callout, { fontWeight: '700', color: colors.ink }]}>{item.display_name}</Text>
+                <Text style={[type.footnote, { color: colors.textMuted }]}>@{item.username}</Text>
               </View>
             </Pressable>
           )}
-          ListEmptyComponent={
-            <Text style={{ textAlign: 'center', marginTop: 50, color: colors.textSec }}>No people found.</Text>
-          }
+          ListEmptyComponent={<EmptyState icon="search" title="No people found" subtitle="Try a different name or handle." />}
         />
       )}
     </SafeAreaView>

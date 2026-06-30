@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
-import { colors, radius } from '@/theme';
+import { colors, radius, shadow } from '@/theme';
 import { Waveform } from './Waveform';
 import { usePlayback } from '@/lib/playback';
 import { formatDuration } from '@/lib/format';
@@ -70,19 +70,23 @@ export function VoicePlayer({ id, url, durationSeconds, size = 'md', onFirstPlay
         paddingVertical: 5,
         paddingLeft: 5,
         paddingRight: 14,
+        ...shadow.xs,
       }}
     >
       <Pressable
         onPress={onToggle}
         hitSlop={6}
-        style={{
+        accessibilityRole="button"
+        accessibilityLabel={status.playing ? 'Pause' : 'Play voice'}
+        style={({ pressed }) => ({
           width: btn,
           height: btn,
           borderRadius: btn / 2,
           backgroundColor: colors.primary,
           alignItems: 'center',
           justifyContent: 'center',
-        }}
+          transform: [{ scale: pressed ? 0.92 : 1 }],
+        })}
       >
         <Feather name={status.playing ? 'pause' : 'play'} size={size === 'sm' ? 14 : 16} color={colors.white} />
       </Pressable>

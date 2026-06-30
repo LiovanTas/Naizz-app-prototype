@@ -5,15 +5,20 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/Avatar';
 import { Waveform } from '@/components/Waveform';
-import { colors } from '@/theme';
+import { colors, type, spacing, shadow } from '@/theme';
 import { formatDuration } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-function CircleBtn({ icon, onPress, bg = colors.deepBtn, size = 60 }: { icon: keyof typeof Feather.glyphMap; onPress?: () => void; bg?: string; size?: number }) {
+function CircleBtn({ icon, onPress, bg = colors.deepBtn, size = 60, label }: { icon: keyof typeof Feather.glyphMap; onPress?: () => void; bg?: string; size?: number; label?: string }) {
   return (
-    <Pressable onPress={onPress} style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label ?? icon}
+      style={({ pressed }) => ({ width: size, height: size, borderRadius: size / 2, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pressed ? 0.92 : 1 }], ...shadow.md })}
+    >
       <Feather name={icon} size={24} color={colors.onDeep} />
     </Pressable>
   );
@@ -55,11 +60,11 @@ export default function Call() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.deep }}>
-      <View style={{ alignItems: 'center', paddingTop: 16 }}>
-        <Text style={{ fontSize: 17, fontWeight: '700', color: colors.onDeep }}>Private call</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+      <View style={{ alignItems: 'center', paddingTop: spacing.lg }}>
+        <Text style={[type.headline, { color: colors.onDeep }]}>Private call</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: spacing.xs }}>
           <Feather name="lock" size={13} color={colors.onDeepSoft} />
-          <Text style={{ fontSize: 13, color: colors.onDeepSoft }}>End-to-end encrypted</Text>
+          <Text style={[type.footnote, { color: colors.onDeepSoft }]}>End-to-end encrypted</Text>
         </View>
       </View>
 
@@ -67,10 +72,10 @@ export default function Call() {
         <View style={{ width: 230, height: 230, borderRadius: 115, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center' }}>
           <Avatar seed={seed} name={name} size={170} />
         </View>
-        <Text style={{ fontSize: 30, fontWeight: '800', color: colors.onDeep }}>{name}</Text>
+        <Text style={[type.title1, { fontSize: 30, color: colors.onDeep }]}>{name}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: connected ? colors.green : colors.warm }} />
-          <Text style={{ fontSize: 14, color: colors.onDeepSoft }}>
+          <Text style={[type.subhead, { color: colors.onDeepSoft, fontVariant: ['tabular-nums'] }]}>
             {connected ? `Connected — ${formatDuration(seconds)}` : 'Ringing…'}
           </Text>
         </View>
@@ -93,10 +98,10 @@ export default function Call() {
       </View>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', paddingHorizontal: 20, paddingBottom: 10 }}>
-        <CircleBtn icon={muted ? 'mic-off' : 'mic'} bg={muted ? colors.live : colors.deepBtn} onPress={() => setMuted((m) => !m)} />
-        <CircleBtn icon="volume-2" />
-        <CircleBtn icon="more-horizontal" />
-        <CircleBtn icon="phone-off" bg={colors.live} onPress={() => router.back()} />
+        <CircleBtn icon={muted ? 'mic-off' : 'mic'} label={muted ? 'Unmute' : 'Mute'} bg={muted ? colors.live : colors.deepBtn} onPress={() => setMuted((m) => !m)} />
+        <CircleBtn icon="volume-2" label="Speaker" />
+        <CircleBtn icon="more-horizontal" label="More" />
+        <CircleBtn icon="phone-off" label="End call" bg={colors.live} onPress={() => router.back()} />
       </View>
     </SafeAreaView>
   );

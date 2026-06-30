@@ -1,5 +1,5 @@
 import { View, Text, Image } from 'react-native';
-import { avatarColor, initials } from '@/theme';
+import { avatarColor, initials, colors, USE_GENERATED_AVATARS, generatedAvatarUrl } from '@/theme';
 
 type Props = {
   seed: string; // determines the fallback color
@@ -7,11 +7,16 @@ type Props = {
   size?: number;
   ring?: string | null;
   imageUrl?: string | null; // uploaded profile picture
+  online?: boolean; // presence dot
 };
 
-// Circle avatar: shows the uploaded picture when present, else colored initials.
-export function Avatar({ seed, name, size = 44, ring = null, imageUrl }: Props) {
-  const inner = ring ? size - 8 : size;
+// Circle avatar: uploaded picture when present, else colored initials.
+// `ring` draws a haloed story-style ring with a white gap.
+export function Avatar({ seed, name, size = 44, ring = null, imageUrl, online }: Props) {
+  const gap = ring ? 3 : 0;
+  const inner = size - gap * 2 - (ring ? 3 : 0);
+  // Real uploaded photo wins; otherwise a deterministic illustrated face (prototype).
+  const photo = imageUrl ?? (USE_GENERATED_AVATARS ? generatedAvatarUrl(seed, inner * 2) : null);
   return (
     <View
       style={{
@@ -20,12 +25,16 @@ export function Avatar({ seed, name, size = 44, ring = null, imageUrl }: Props) 
         borderRadius: size / 2,
         alignItems: 'center',
         justifyContent: 'center',
-        borderWidth: ring ? 2.5 : 0,
+        borderWidth: ring ? 2 : 0,
         borderColor: ring ?? 'transparent',
+        backgroundColor: ring ? colors.white : 'transparent',
       }}
     >
-      {imageUrl ? (
-        <Image source={{ uri: imageUrl }} style={{ width: inner, height: inner, borderRadius: inner / 2 }} />
+      {photo ? (
+        <Image
+          source={{ uri: photo }}
+          style={{ width: inner, height: inner, borderRadius: inner / 2, backgroundColor: colors.cardAlt, borderWidth: ring ? 0 : 1, borderColor: 'rgba(20,59,82,0.06)' }}
+        />
       ) : (
         <View
           style={{
@@ -42,6 +51,21 @@ export function Avatar({ seed, name, size = 44, ring = null, imageUrl }: Props) 
           </Text>
         </View>
       )}
+      {online ? (
+        <View
+          style={{
+            position: 'absolute',
+            right: 0,
+            bottom: 0,
+            width: Math.max(10, size * 0.26),
+            height: Math.max(10, size * 0.26),
+            borderRadius: 999,
+            backgroundColor: colors.green,
+            borderWidth: 2,
+            borderColor: colors.white,
+          }}
+        />
+      ) : null}
     </View>
   );
 }

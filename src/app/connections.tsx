@@ -1,11 +1,14 @@
 import { useCallback, useState } from 'react';
-import { View, Text, FlatList, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, FlatList, Pressable, Alert } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/Button';
-import { colors } from '@/theme';
+import { AppHeader } from '@/components/AppHeader';
+import { EmptyState } from '@/components/EmptyState';
+import { RowSkeleton } from '@/components/Skeleton';
+import { colors, spacing, type as t } from '@/theme';
 import { useAuth } from '@/lib/auth';
 import { listFollowers, listFollowing, toggleFollow } from '@/lib/social';
 import { sendRoomInvite } from '@/lib/messages';
@@ -44,8 +47,8 @@ function Row({
     <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 12 }}>
       <Avatar seed={item.username} name={item.displayName} size={48} imageUrl={item.avatarUrl} />
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 15.5, fontWeight: '700', color: colors.ink }}>{item.displayName}</Text>
-        <Text style={{ fontSize: 13, color: colors.textMuted }}>@{item.username}</Text>
+        <Text style={[t.callout, { fontWeight: '700', color: colors.ink }]}>{item.displayName}</Text>
+        <Text style={[t.footnote, { color: colors.textMuted }]}>@{item.username}</Text>
       </View>
       {mode === 'invite' ? (
         <Button
@@ -127,38 +130,34 @@ export default function Connections() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top']}>
-      <View style={{ height: 56, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        <Pressable onPress={() => router.back()} hitSlop={8} style={{ padding: 6 }}>
-          <Feather name="chevron-left" size={26} color={colors.ink} />
-        </Pressable>
-        <Text style={{ fontSize: 20, fontWeight: '800', color: colors.ink }}>{title}</Text>
-      </View>
+      <AppHeader title={title} variant="inline" onBack={() => router.back()} />
       {mode === 'invite' ? (
-        <Text style={{ paddingHorizontal: 16, paddingBottom: 6, fontSize: 13, color: colors.textSec }}>
+        <Text style={[t.footnote, { paddingHorizontal: spacing.gutter, paddingBottom: spacing.sm, color: colors.textSec }]}>
           Tap Invite to send a join link to people you follow.
         </Text>
       ) : null}
 
       {loading ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={colors.primary} />
-        </View>
+        <RowSkeleton />
       ) : (
         <FlatList
           data={items}
           keyExtractor={(c) => c.id}
           renderItem={({ item }) => <Row item={item} mode={mode} onCall={onCall} onInvite={onInvite} />}
           ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: colors.divider, marginLeft: 76 }} />}
+          contentContainerStyle={items.length === 0 ? { flexGrow: 1 } : undefined}
           ListEmptyComponent={
-            <View style={{ alignItems: 'center', paddingTop: 60, paddingHorizontal: 32 }}>
-              <Text style={{ fontSize: 14, color: colors.textSec, textAlign: 'center', lineHeight: 20 }}>
-                {mode === 'invite'
-                  ? 'Follow some people first, then invite them here.'
+            <EmptyState
+              icon={mode === 'invite' ? 'user-plus' : 'users'}
+              title={mode === 'invite' ? 'No one to invite yet' : type === 'followers' ? 'No followers yet' : 'Not following anyone yet'}
+              subtitle={
+                mode === 'invite'
+                  ? 'Follow some people first, then invite them to your room.'
                   : type === 'followers'
-                    ? 'No followers yet.'
-                    : 'Not following anyone yet.'}
-              </Text>
-            </View>
+                    ? 'When people follow you, they show up here.'
+                    : 'Find voices you like and follow them.'
+              }
+            />
           }
         />
       )}

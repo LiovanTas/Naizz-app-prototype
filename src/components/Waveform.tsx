@@ -1,12 +1,15 @@
 import { View } from 'react-native';
 import { colors } from '@/theme';
 
-// Deterministic pseudo-random bar heights (0..1), stable per length.
+// Deterministic, organic-looking bar heights (0..1), stable per length.
+// Layered sines + a gentle center-weighted envelope so it reads like real audio.
 function waveformBars(n: number): number[] {
   const out: number[] = [];
   for (let i = 0; i < n; i++) {
-    const v = Math.abs(Math.sin(i * 0.9) * 0.6 + Math.sin(i * 0.37) * 0.4);
-    out.push(Math.max(0.12, v));
+    const base = Math.abs(Math.sin(i * 0.9) * 0.5 + Math.sin(i * 0.37) * 0.3 + Math.sin(i * 1.7) * 0.2);
+    const t = i / Math.max(1, n - 1);
+    const envelope = 0.55 + 0.45 * Math.sin(Math.PI * t); // taller in the middle
+    out.push(Math.max(0.16, Math.min(1, base * envelope)));
   }
   return out;
 }
@@ -39,8 +42,8 @@ export function Waveform({
           style={{
             width: barWidth,
             marginRight: i === bars - 1 ? 0 : gap,
-            height: Math.max(4, Math.round(h * max)),
-            borderRadius: 2,
+            height: Math.max(3, Math.round(h * max)),
+            borderRadius: barWidth / 2,
             backgroundColor: i < played ? color : trackColor,
           }}
         />
