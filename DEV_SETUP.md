@@ -1,15 +1,6 @@
 # Naizz — Developer Setup
 
-Naizz is a **voice-first social app**: every post is your voice. Feed, voice replies,
-DMs (text + voice), profiles/follows, live audio **rooms**, and **1:1 calls** (ring /
-accept / decline).
-
-**Stack:** Expo (managed) · React Native · TypeScript · Expo Router · Supabase
-(Postgres, Auth, Storage, Realtime, Edge Functions) · **LiveKit** (real‑time audio).
-
-> ⚠️ **Expo Go does NOT work** for this app. LiveKit ships native WebRTC code, which
-> Expo Go can't load. You run it through a **development build** (a small custom app
-> called *naizz*) + the Metro dev server. Details below.
+> **Expo Go does NOT work** for this app. LiveKit ships native WebRTC code, which Expo Go can't load
 
 ---
 
