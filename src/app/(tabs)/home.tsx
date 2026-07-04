@@ -122,7 +122,7 @@ export default function Home() {
     <Screen>
       <View style={{ height: 56, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' }}>
         <Text style={{ flex: 1, fontSize: 26, fontWeight: '800', color: colors.primary }}>Naizz</Text>
-        <IconButton name="search" />
+        <IconButton name="phone" onPress={() => router.push('/calls')} />
         <IconButton name="message-circle" onPress={() => router.push('/messages')} />
       </View>
       <FlatList

@@ -50,3 +50,5 @@ dist-check/
 AGENTS.md
 CLAUDE.md
 .claude/
+
+supabase/.temp/

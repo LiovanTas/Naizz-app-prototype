@@ -5,9 +5,20 @@ import { StatusBar } from 'expo-status-bar';
 import { setAudioModeAsync } from 'expo-audio';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { registerGlobals } from '@livekit/react-native';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { PlaybackProvider } from '@/lib/playback';
+import { RoomSessionProvider } from '@/lib/roomSession';
+import { MiniRoomBar, IncomingCallGate } from '@/components/GlobalOverlays';
 import { colors } from '@/theme';
+
+// Set up WebRTC globals for LiveKit. No-op/throws harmlessly in Expo Go where
+// the native module isn't present (audio just stays in presence-only mode).
+try {
+  registerGlobals();
+} catch {
+  /* native WebRTC unavailable (e.g. Expo Go) */
+}
 
 function Splash() {
   return (
@@ -42,22 +53,28 @@ function RootNavigator() {
   if (loading) return <Splash />;
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="sign-in" />
-      <Stack.Screen name="sign-up" />
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="record" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="edit-profile" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="create-room" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="messages" />
-      <Stack.Screen name="conversation" />
-      <Stack.Screen name="new-message" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="room" />
-      <Stack.Screen name="call" />
-      <Stack.Screen name="connections" />
-      <Stack.Screen name="settings" />
-    </Stack>
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="sign-in" />
+        <Stack.Screen name="sign-up" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="record" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="edit-profile" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="create-room" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="messages" />
+        <Stack.Screen name="conversation" />
+        <Stack.Screen name="new-message" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="room" />
+        <Stack.Screen name="call" />
+        <Stack.Screen name="connections" />
+        <Stack.Screen name="settings" />
+        <Stack.Screen name="calls" />
+        <Stack.Screen name="incoming-call" options={{ presentation: 'fullScreenModal' }} />
+      </Stack>
+      {session ? <IncomingCallGate /> : null}
+      <MiniRoomBar />
+    </>
   );
 }
 
@@ -67,8 +84,10 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <AuthProvider>
           <PlaybackProvider>
-            <RootNavigator />
-            <StatusBar style="dark" />
+            <RoomSessionProvider>
+              <RootNavigator />
+              <StatusBar style="dark" />
+            </RoomSessionProvider>
           </PlaybackProvider>
         </AuthProvider>
       </SafeAreaProvider>

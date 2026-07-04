@@ -8,7 +8,8 @@ import { Button } from '@/components/Button';
 import { Waveform } from '@/components/Waveform';
 import { colors } from '@/theme';
 import { supabase } from '@/lib/supabase';
-import { getRoom, listRoomMembers, joinRoom, leaveRoom, setMuted } from '@/lib/rooms';
+import { getRoom, listRoomMembers } from '@/lib/rooms';
+import { useRoomSession } from '@/lib/roomSession';
 import type { RoomMember, RoomSummary } from '@/lib/types';
 
 function CircleBtn({ icon, onPress, bg = colors.deepBtn }: { icon: keyof typeof Feather.glyphMap; onPress?: () => void; bg?: string }) {
@@ -22,6 +23,7 @@ function CircleBtn({ icon, onPress, bg = colors.deepBtn }: { icon: keyof typeof 
 export default function Room() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { active, muted, enter, exit, toggleMute } = useRoomSession();
   const [room, setRoom] = useState<RoomSummary | null>(null);
   const [members, setMembers] = useState<RoomMember[]>([]);
   const [meId, setMeId] = useState<string | null>(null);
@@ -37,31 +39,32 @@ export default function Room() {
     supabase.auth.getUser().then(({ data }) => setMeId(data.user?.id ?? null));
   }, []);
 
+  // Join via the session provider (keeps audio alive if you minimize).
   useEffect(() => {
     if (!id) return;
-    joinRoom(id).then(load).catch(() => {});
+    enter(id).then(load).catch(() => {});
     const channel = supabase
       .channel(`room-${id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'room_members', filter: `room_id=eq.${id}` }, () => load())
       .subscribe();
+    // NOTE: no leaveRoom here — navigating away minimizes; only "Leave" exits.
     return () => {
       supabase.removeChannel(channel);
-      leaveRoom(id).catch(() => {});
     };
-  }, [id, load]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
-  const me = members.find((m) => m.userId === meId);
+  const liveConnected = active?.roomId === id;
   const speakers = members.filter((m) => m.role === 'host' || m.role === 'speaker');
   const listeners = members.filter((m) => m.role === 'listener');
 
   const onLeave = async () => {
-    if (id) await leaveRoom(id);
+    await exit();
     router.back();
   };
 
-  const toggleMute = async () => {
-    if (!id || !me) return;
-    await setMuted(id, !me.muted);
+  const onMic = async () => {
+    await toggleMute();
     load();
   };
 
@@ -75,7 +78,8 @@ export default function Room() {
             <Text style={{ fontSize: 12, fontWeight: '800', color: colors.white, letterSpacing: 1 }}>LIVE</Text>
           </View>
         </View>
-        <Pressable onPress={onLeave} hitSlop={8} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.deepBtn, alignItems: 'center', justifyContent: 'center' }}>
+        {/* Chevron = minimize (stay in the room) */}
+        <Pressable onPress={() => router.back()} hitSlop={8} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.deepBtn, alignItems: 'center', justifyContent: 'center' }}>
           <Feather name="chevron-down" size={22} color={colors.onDeep} />
         </Pressable>
       </View>
@@ -110,16 +114,18 @@ export default function Room() {
           ))}
         </View>
 
-        {/* Captions */}
+        {/* Status */}
         <View style={{ backgroundColor: colors.deepCard, borderRadius: 18, padding: 18, marginTop: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={{ fontSize: 12, fontWeight: '800', letterSpacing: 1.5, color: colors.green }}>LIVE CAPTIONS</Text>
+            <Text style={{ fontSize: 12, fontWeight: '800', letterSpacing: 1.5, color: colors.green }}>LIVE AUDIO</Text>
             <View style={{ width: 60, height: 18 }}>
               <Waveform bars={14} max={16} barWidth={2} gap={2} played={7} color={colors.green} trackColor="rgba(47,191,143,0.3)" />
             </View>
           </View>
           <Text style={{ fontSize: 14.5, color: colors.onDeep, lineHeight: 21, marginTop: 12 }}>
-            You&apos;re in the room. Live audio is in presence mode for this build — captions and voice stream turn on when the media service is connected.
+            {liveConnected
+              ? 'Live audio is on — tap the mic to talk; everyone in the room can hear you. Tap the ⌄ to minimize and keep listening.'
+              : 'Connecting to live audio…'}
           </Text>
         </View>
 
@@ -137,7 +143,7 @@ export default function Room() {
 
       {/* Controls */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 }}>
-        <CircleBtn icon={me?.muted ? 'mic-off' : 'mic'} onPress={toggleMute} bg={me?.muted ? colors.deepBtn : colors.primary} />
+        <CircleBtn icon={muted ? 'mic-off' : 'mic'} onPress={onMic} bg={muted ? colors.deepBtn : colors.primary} />
         <CircleBtn icon="user-plus" onPress={() => router.push({ pathname: '/connections', params: { mode: 'invite', roomId: id } })} />
         <CircleBtn icon="share" />
         <View style={{ flex: 1 }} />
