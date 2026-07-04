@@ -72,27 +72,6 @@ Audio flows through LiveKit Cloud over the internet, so devices don't need to sh
 4. **Room:** **Start a room** → tap **invite** (person‑plus) → pick the other → both tap the **mic** to unmute.
 5. **Allow the microphone** permission the first time.
 
----
-
-## Project structure
-```
-src/app/            screens (Expo Router file-based routing)
-  (tabs)/           Home · For You · Activity · You  (+ center Record button)
-  room.tsx call.tsx calls.tsx incoming-call.tsx messages.tsx conversation.tsx ...
-src/components/     UI components (VoiceCard, VoicePlayer, Avatar, GlobalOverlays, ...)
-src/lib/            supabase client, api, auth, livekit, calls, rooms, messages, ...
-src/theme/          design tokens (colors/spacing/typography)
-supabase/           schema.sql → schema_v2 → v3 → v4  +  functions/livekit-token
-```
-
-## Important constraints (don't trip on these)
-- **Expo SDK is pinned to 54 — do not bump it.** There's a deliberate
-  `"overrides": { "expo-asset": "~12.0.13" }` in `package.json` to keep an SDK‑56
-  straggler off; leave it. Run **`npx expo-doctor` (expect 18/18)** before any native build.
-- **Never commit `.env`** (it's git‑ignored). Same for `supabase/.temp/`.
-- The LiveKit **API secret** is not in this repo — it's a Supabase function secret.
-- Windows: if `npx expo …` says *"running scripts is disabled,"* use `npx.cmd …`,
-  or run once: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
 
 ## Building your own dev client (only if you change native deps)
 Requires an Expo account (and being added to the `liovans-team` EAS project, or use
@@ -104,12 +83,3 @@ eas build --platform android --profile development   # ~10–15 min, gives an AP
 ```
 Install that APK, then `expo start --dev-client`.
 
-## Backend / DB changes
-The Supabase project is shared. If you add tables or policies, create a new
-`supabase/schema_vN.sql` and run it in the Supabase SQL editor (ask Liovan for access),
-and keep the edge function in `supabase/functions/` in sync.
-
-## Non‑developer testers
-People who just want to *use* the app (no coding) don't need any of this — give them a
-standalone **preview** build APK instead (`eas build --profile preview`); it runs on its
-own with no Metro server.
