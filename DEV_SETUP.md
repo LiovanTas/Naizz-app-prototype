@@ -16,7 +16,6 @@ accept / decline).
 ## 1. Prerequisites
 - **Node.js 18+ LTS** and **Git**
 - An **Android phone** (or Android emulator). iOS needs a Mac + its own build.
-- **Repo access** to `git@github.com:LiovanTas/Naizz-app-prototype.git` (ask Liovan to add you).
 
 ## 2. Clone & install
 ```bash
@@ -69,7 +68,7 @@ JavaScript edits hot‑reload instantly — same DX as Expo Go, just through the
 Audio flows through LiveKit Cloud over the internet, so devices don't need to share a network.
 1. Sign up **two accounts** (two phones, or phone + emulator).
 2. Make them **follow each other**.
-3. **1:1 call:** Home → 📞 icon → tap the person → they get an incoming‑call screen → **Accept** → talk.
+3. **1:1 call:** Home → phone icon → tap the person → they get an incoming‑call screen → **Accept** → talk.
 4. **Room:** **Start a room** → tap **invite** (person‑plus) → pick the other → both tap the **mic** to unmute.
 5. **Allow the microphone** permission the first time.
 
